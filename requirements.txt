@@ -1,0 +1,7 @@
+ultralytics==8.2.71
+loguru
+pytest
+pytest-cov
+lapx
+grpcio
+grpcio-tools
