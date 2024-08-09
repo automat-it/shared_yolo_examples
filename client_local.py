@@ -5,11 +5,12 @@ import sys
 
 sleep_time=float(sys.argv[1])
 model_sample_model = YOLO("./models/sample_model/yolov8n.pt", task="detect")
+model_sample_model.to('cuda')
 
 image = cv2.imread("test_image.jpg")
 image = cv2.resize(image, (640, 640))
 while True:
-    print(f'RUN  -----------------------------------------------------------------')
+    print(f'-----------------------------------------------------------------')
     start = time.time_ns()
     tracks = model_sample_model.track(
                 image,

@@ -20,7 +20,7 @@ docker build . -t yolo-gpu-test
 How to run tests on GPU instance?
 
 1. Execute the folloiwng command once to run the test application on local GPU instance or multiple times to simulate multiple copies of the application:
-docker run --gpus all yolo-gpu-test -- python3 client_local.py
+docker run --gpus all yolo-gpu-test -- python3 client_local.py 0.04
 
 2. To check GPU utilization execute the command:
 docker run --gpus all yolo-gpu-test -- nvidia-smi
