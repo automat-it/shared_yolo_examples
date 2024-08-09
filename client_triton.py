@@ -6,7 +6,7 @@ from ultralytics import YOLO
 import cv2
 print('Start')
 
-image = cv2.imread("/tmp/test.jpg")
+image = cv2.imread("test_image.jpg")
 image = cv2.resize(image, (640, 640))
 model = YOLO("grpc://localhost:8001/yolo_onnx/v2/models/yolov8/infer", task="detect")
 

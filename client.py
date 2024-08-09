@@ -24,7 +24,7 @@ stub = yolo_pb2_grpc.ImageProcedureStub(channel)
 # encoding image/numpy array
 
 #for _ in range(1000):
-image = cv2.imread("/tmp/test.jpg")
+image = cv2.imread("test_image.jpg")
 image = cv2.resize(image, (480, 480))
 # compress
 #data = zlib.compress(frame)
