@@ -1,8 +1,10 @@
-THIS CODE PROVIDED AS AN EXAMPLE AND SHOULD NOT BE USED FOR PRODUCTION SYSTEMS
+# YOLO model tests
 
-The repo contains all necesarry files to build docker image and run it on standalone GPU instance or on Kubernetes.
+**THIS REPO PROVIDED AS AN EXAMPLE AND SHOULD NOT BE USED FOR PRODUCTION SYSTEMS**
 
-Prerequriment:
+The repo contains all the necessary files to build a YOLO test docker image and run it on a standalone GPU instance or on Kubernetes.
+
+## Prerequriment:
 1. Install docker
 2. Install Nvidia GPU driver:
 https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html
@@ -11,61 +13,83 @@ https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install
 
 
 
-Build docker image
+## Build docker image
 1. Run command:
+```
 docker build . -t yolo-gpu-test
+```
 2. Optionally push the image to the ECR to test the model on Kubernetes cluster.
 
 
-How to run tests on GPU instance?
+## Run tests on standalone GPU instance
 
-1. Execute the folloiwng command once to run the test application on local GPU instance or multiple times to simulate multiple copies of the application:
+1. Execute the following command once to run the test application on the standalone GPU instance:
+```
 docker run --gpus all yolo-gpu-test -- python3 client_local.py 0.04
+```
+Execute the command with '-d' option to run multiple copies of the application to test the load on GPU:
+```
+docker run -d --gpus all yolo-gpu-test -- python3 client_local.py 0.04
+```
 
 2. To check GPU utilization execute the command:
+```
 docker run --gpus all yolo-gpu-test -- nvidia-smi
+```
 
 
+## Run tests on Kubernetes
 
-How to run tests on Kubernetes?
+1. Tag or build docker image with the proper ECR name, login and push to ECR:
+docker tag yolo-gpu-test XXXXXXX.dkr.ecr.XXXXXXXX.amazonaws.com/yolo-gpu-test:latest
+docker push XXXXXXX.dkr.ecr.XXXXXXXX.amazonaws.com/yolo-gpu-test:latest
 
-
-1. update the folloiwng part of the yolo-test-deployment.yaml:
+2. update the folloiwng part of the yolo-test-deployment.yaml:
+```
       - command:
         - python3
         - "client_local.py"
-        - "<sleep time>"
-        image: <ECR repo with the the image>
+        - "SLEEP_TIME"
+        image: ECR_REPO_TAG
+```
+Where SLEEP_TIME - timeout between model_sample_model.track executions. Assuming of video flow is 24 frames per second the timeout should be 1/24 = 0.04
+    ECR_REPO_TAG - ECR repo name and tag of the docker image.
 
-Where <sleep time> - timeout between model_sample_model.track executions. Assuming of video flow is 24 frames per second the timeout chould be 1/24 = 0.04
-	<ECR repo with the the image> - ECR repo name and tag of the docker image.
-
-2. Apply the deployment on Kubernetes cluster:
+3. Apply the deployment on Kubernetes cluster:
+```
 kubectl apply -f yolo-test-deployment.yaml
+```
+4. To change the amount of model pods update 'replicas' value and apply the deployment file again.
 
-3. To change amount of model pods update 'replicas' value and apply the deployment file again.
-
-4. To delete deployment execute:
+5. To delete deployment execute:
+```
 kubectl delete -f yolo-test-deployment.yaml
+```
 
-
-5. Performance results:
-GPU utilization:
-- Find one of the deployemnt pod by command:
-
+## Review performance results:
+**GPU utilization:**
+- Find one of the deployment pod by command:
+```
+kubectl get pods -l app=yolo-test
+```
 - Execute nvidia-smi command on the pod:
+```
 kubectl exec -it <POD_NAME> -- nvidia-smi
-
-Data processing speed:
+```
+**Data processing speed:**
 - Find one of the deployemnt pod by command:
-
+```
+kubectl get pods -l app=yolo-test
+```
 - Get logs of the pod by command:
+```
 kubectl logs <POD_NAME>
+```
 
+## Troubleshooting
 
-Troubleshuting:
-The most command problem is that docker run or pod does not have access to GPU in this case "WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available." warning messages appers and client_local.py exits with error.
-
+1. The most command problem is that docker run or pod does not have access to GPU in this case "WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available." warning messages appers and client_local.py exits with error.
+```
 ==========
 == CUDA ==
 ==========
@@ -83,10 +107,11 @@ A copy of this license is made available in this container at /NGC-DL-CONTAINER-
 WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available.
    Use the NVIDIA Container Toolkit to start this container with GPU support; see
    https://docs.nvidia.com/datacenter/cloud-native/ .
+```
 
+In this case, for Docker execution need to check that Nvidia driver is installed and the docker executed with **--gpus all** option.
+For Kubernetes need to check on which node a pod are running and has correct NVIDIA_VISIBLE_DEVICES variable that should be:
+NVIDIA_VISIBLE_DEVICES=/var/run/nvidia-container-devices
+This env varible set automatically by Nvidia Kubernetes plugin.
 
-In this case for Docker execution need to check that Nvidia driver is installed and the docker executed with --gpus all option.
-For Kubernetes need to check on which node a pod are running and has correct XXXXX variable that should be:
-
-
-
+2. Dockerized GPU applications do not show ML running processes by nvidia-smi because of pid isilation. However, it shows GPU usage and free memory properly.
