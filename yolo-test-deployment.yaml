@@ -25,8 +25,8 @@ spec:
       - command:
         - python3
         - "client_local.py"
-        - "<sleep time>"
-        image: <ECR repo with the the image>
+        - "SLEEP_TIME"
+        image: ECR_REPO_TAG
         imagePullPolicy: Always
         name: yolov8
         ports:
